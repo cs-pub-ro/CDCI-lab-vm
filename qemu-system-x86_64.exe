@@ -1,9 +1,10 @@
 #!/bin/bash
-# Wrapper script for calling Windows QEMU from WSL
-# Translates Linux (WSL) paths to Windows paths in arguments
-# Requires: QEMU for Windows installed (default: C:\Program Files\qemu\)
+# Wrapper script for calling Windows QEMU from WSL2
+# - Translates Linux (WSL) paths to Windows paths
+# - Rewrites VNC/SSH bind to 0.0.0.0 so they're reachable from WSL2
+# - Sets up socat port forwards (WSL localhost -> Windows host IP)
+# Requires: QEMU for Windows, socat (apt install socat)
 
-# Auto-detect Windows QEMU path
 QEMU_WIN="${QEMU_WIN_PATH:-/mnt/c/Program Files/qemu/qemu-system-x86_64.exe}"
 if [[ ! -x "$QEMU_WIN" ]]; then
     echo "ERROR: Windows QEMU not found at: $QEMU_WIN" >&2
@@ -11,9 +12,18 @@ if [[ ! -x "$QEMU_WIN" ]]; then
     exit 1
 fi
 
+# Fast path: simple queries like --version, --help (no path/port handling needed)
+case "$1" in
+    --version|--help|-version|-h)
+        exec "$QEMU_WIN" "$@"
+        ;;
+esac
+
+# Get Windows host IP as seen from WSL2
+WIN_HOST_IP=$(ip route show default 2>/dev/null | awk '{print $3}')
+
 translate_path() {
     local p="$1"
-    # Translate any absolute Linux path to Windows path
     if [[ "$p" == /* ]]; then
         wslpath -w "$p" 2>/dev/null || echo "$p"
     else
@@ -21,14 +31,24 @@ translate_path() {
     fi
 }
 
+# Ports to forward via socat (collected during arg parsing)
+SOCAT_PORTS=()
+SOCAT_PIDS=()
+
+cleanup() {
+    for pid in "${SOCAT_PIDS[@]}"; do
+        kill "$pid" 2>/dev/null
+    done
+}
+trap cleanup EXIT
+
 args=()
 for arg in "$@"; do
     if [[ "$arg" == /* && ! "$arg" == *,* && ! "$arg" == *=* ]]; then
-        # Simple path argument (e.g., /mnt/d/iso/file.iso)
+        # Simple path argument
         arg=$(translate_path "$arg")
     elif [[ "$arg" == *file=/* ]]; then
-        # Drive argument with file= containing a path
-        # e.g.: file=/home/mihai/.cache/...,if=virtio,format=qcow2,...
+        # Drive argument: file=/path/...,if=virtio,...
         new_arg=""
         IFS=',' read -ra parts <<< "$arg"
         for part in "${parts[@]}"; do
@@ -44,8 +64,30 @@ for arg in "$@"; do
             fi
         done
         arg="$new_arg"
+    elif [[ "$arg" =~ ^127\.0\.0\.1:([0-9]+)$ ]]; then
+        # VNC bind address: 127.0.0.1:display -> 0.0.0.0:display
+        VNC_DISPLAY="${BASH_REMATCH[1]}"
+        VNC_PORT=$((5900 + VNC_DISPLAY))
+        SOCAT_PORTS+=("$VNC_PORT")
+        arg="0.0.0.0:${VNC_DISPLAY}"
+    elif [[ "$arg" == *hostfwd=tcp::*-:* ]]; then
+        # SSH/port forward: extract port and rewrite to bind on 0.0.0.0
+        if [[ "$arg" =~ hostfwd=tcp::([0-9]+)-: ]]; then
+            SOCAT_PORTS+=("${BASH_REMATCH[1]}")
+        fi
+        arg="${arg//hostfwd=tcp::/hostfwd=tcp:0.0.0.0:}"
     fi
     args+=("$arg")
 done
+
+# Start socat port forwards (WSL localhost -> Windows host IP)
+if [[ -n "$WIN_HOST_IP" ]]; then
+    for port in "${SOCAT_PORTS[@]}"; do
+        socat TCP-LISTEN:"${port}",bind=127.0.0.1,fork TCP:"${WIN_HOST_IP}":"${port}" &
+        SOCAT_PIDS+=($!)
+    done
+    # Give socat a moment to start
+    [[ ${#SOCAT_PIDS[@]} -gt 0 ]] && sleep 0.2
+fi
 
 exec "$QEMU_WIN" "${args[@]}"

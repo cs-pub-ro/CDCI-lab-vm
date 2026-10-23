@@ -15,3 +15,11 @@ BASE_ISO_DIR ?= $(HOME)/Downloads/iso
 
 # Password for cloud VM's console
 #CDCI_CLOUD_ADMIN_PASSWORD=cdcirullz  # change this
+
+## WSL / Windows QEMU setup (uncomment if building from WSL)
+## Uses the included wrapper script that translates WSL paths for Windows QEMU
+#BUILD_DIR = /mnt/d/packer-build
+#BASE_ISO_DIR = /mnt/d/iso
+#PACKER_ARGS_EXTRA += -var 'qemu_binary=$(abspath ./qemu-system-x86_64.exe)'
+#PACKER_ARGS_EXTRA += -var 'qemu_accelerator=whpx'
+#HEADLESS_PACKER = true

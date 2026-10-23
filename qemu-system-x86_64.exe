@@ -1,0 +1,51 @@
+#!/bin/bash
+# Wrapper script for calling Windows QEMU from WSL
+# Translates Linux (WSL) paths to Windows paths in arguments
+# Requires: QEMU for Windows installed (default: C:\Program Files\qemu\)
+
+# Auto-detect Windows QEMU path
+QEMU_WIN="${QEMU_WIN_PATH:-/mnt/c/Program Files/qemu/qemu-system-x86_64.exe}"
+if [[ ! -x "$QEMU_WIN" ]]; then
+    echo "ERROR: Windows QEMU not found at: $QEMU_WIN" >&2
+    echo "Install QEMU for Windows or set QEMU_WIN_PATH." >&2
+    exit 1
+fi
+
+translate_path() {
+    local p="$1"
+    # Translate any absolute Linux path to Windows path
+    if [[ "$p" == /* ]]; then
+        wslpath -w "$p" 2>/dev/null || echo "$p"
+    else
+        echo "$p"
+    fi
+}
+
+args=()
+for arg in "$@"; do
+    if [[ "$arg" == /* && ! "$arg" == *,* && ! "$arg" == *=* ]]; then
+        # Simple path argument (e.g., /mnt/d/iso/file.iso)
+        arg=$(translate_path "$arg")
+    elif [[ "$arg" == *file=/* ]]; then
+        # Drive argument with file= containing a path
+        # e.g.: file=/home/mihai/.cache/...,if=virtio,format=qcow2,...
+        new_arg=""
+        IFS=',' read -ra parts <<< "$arg"
+        for part in "${parts[@]}"; do
+            if [[ "$part" == file=/* ]]; then
+                filepath="${part#file=}"
+                winpath=$(translate_path "$filepath")
+                part="file=${winpath}"
+            fi
+            if [[ -n "$new_arg" ]]; then
+                new_arg="${new_arg},${part}"
+            else
+                new_arg="$part"
+            fi
+        done
+        arg="$new_arg"
+    fi
+    args+=("$arg")
+done
+
+exec "$QEMU_WIN" "${args[@]}"

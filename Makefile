@@ -11,7 +11,7 @@ INIT_GOAL = labvm
 SUDO ?= sudo
 
 # Fresh Ubuntu base VM
-$(call vm_new_base_debian,base)
+$(call vm_new_base_ubuntu,base)
 base-ver = 26.04
 
 labvm-ver = $(CDCI_LABVM_VERSION)$(ARCH_SUFFIX)

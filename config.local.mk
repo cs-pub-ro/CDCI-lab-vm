@@ -10,6 +10,7 @@ BASE_ISO_DIR = /mnt/d/iso
 PACKER_ARGS_EXTRA += -var 'qemu_binary=$(abspath ./qemu-system-x86_64.exe)'
 PACKER_ARGS_EXTRA += -var 'qemu_accelerator=whpx'
 PACKER_ARGS_EXTRA += -var 'boot_key_interval=100ms'
+PACKER_ARGS_EXTRA += -var 'boot_command_wait=20s'
 
 # Run headless (no GUI window, VNC only)
 HEADLESS_PACKER = true

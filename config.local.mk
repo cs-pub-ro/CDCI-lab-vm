@@ -11,6 +11,7 @@ PACKER_ARGS_EXTRA += -var 'qemu_binary=$(abspath ./qemu-system-x86_64.exe)'
 PACKER_ARGS_EXTRA += -var 'qemu_accelerator=whpx'
 PACKER_ARGS_EXTRA += -var 'boot_key_interval=100ms'
 PACKER_ARGS_EXTRA += -var 'boot_command_wait=20s'
+PACKER_ARGS_EXTRA += -var 'vm_memory=4096'
 
 # Run headless (no GUI window, VNC only)
 HEADLESS_PACKER = true

@@ -13,8 +13,12 @@ PACKER_ARGS_EXTRA += -var 'boot_key_interval=100ms'
 PACKER_ARGS_EXTRA += -var 'boot_command_wait=20s'
 PACKER_ARGS_EXTRA += -var 'vm_memory=4096'
 
+
 # Run headless (no GUI window, VNC only)
 HEADLESS_PACKER = true
 
 # Cloud admin password
 CDCI_CLOUD_ADMIN_PASSWORD = cdci-admin-2027
+# Prevent Make from deleting images on interrupted builds
+
+.PRECIOUS: %

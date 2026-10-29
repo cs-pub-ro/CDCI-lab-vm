@@ -4,6 +4,10 @@ This repository contains the CDCI Lab VM generation scripts, based on
 [LabVM Framework](https://github.com/cs-pub-ro/labvm-framework)
 (automated using `qemu` and Packer).
 
+The lab content (topologies, Docker containers, scripts) lives in the
+[CDCI-labs](https://github.com/cs-pub-ro/CDCI-labs) repository, which is
+cloned inside the VM during the build.
+
 Requirements:
  - a modern Linux system;
  - basic build tools (make);
@@ -32,6 +36,8 @@ order):
 - `labvm`: builds the Lab VM with all required scripts, Docker images, and config;
 - `cloud`: builds (from `labvm` VM) the cloud VM, cleaned up and ready
   for cloud usage (OpenStack);
+- `cloud_flatten`: flattens the cloud image into a standalone qcow2
+  (removes the backing file reference so it can be uploaded to OpenStack);
 - `localvm`: exports the labvm for local VirtualBox / VMware usage;
 - `labvm_edit`: easily edit an already built Lab VM (uses the previous
   image as backing snapshot);
@@ -58,7 +64,15 @@ make labvm
 
 # 5. Build cloud image (for OpenStack)
 make cloud
+
+# 6. Flatten the cloud image (standalone qcow2, no backing file)
+make cloud_flatten
 ```
+
+> **Note:** `make cloud` produces an overlay image that references the `labvm`
+> image as a backing file. `make cloud_flatten` converts it into a single
+> self-contained qcow2 (compressed), which is required for uploading to
+> OpenStack.
 
 ### OpenStack Upload
 
@@ -77,18 +91,10 @@ openstack image create \
 
 ## Pre-built Docker Images
 
-The VM comes with all CDCI lab Docker images pre-built:
+The VM comes with all CDCI lab Docker images pre-built (from the
+[CDCI-labs](https://github.com/cs-pub-ro/CDCI-labs) `containers/` directory):
 
-| Image | Used by |
-|---|---|
-| `cdci-base` | Shared base for all lab containers |
-| `kali` | lab03, lab04, lab06 (attacker) |
-| `lab03/dnsserver` | lab03 (DNS server) |
-| `lab03/iot` | lab03 (IoT Flask app) |
-| `lab03/dhcpserver` | lab03 (DHCP/dnsmasq) |
-| `dvwa` | lab03 (Damn Vulnerable Web App) |
-| `lab05/crypto` | lab05 (crypto tools) |
-| `lab06/exfiltration` | lab06 (tunneling tools) |
-| `lab07/snort` | lab07 (Snort 3 IDS) |
-| `exam_docker` | lab07 (exam environment) |
-
+| Image | Description | Used by |
+|---|---|---|
+| `cdci_base` | Ubuntu 26.04 base with networking tools, Snort 3, dnsmasq, BIND9, Flask, etc. | lab03, lab04, lab05, lab06, lab07 |
+| `dvwa` | Damn Vulnerable Web App (with MariaDB auto-start) | lab03 |

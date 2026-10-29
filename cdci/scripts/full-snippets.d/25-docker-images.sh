@@ -20,9 +20,8 @@ make -C cdci_base
 docker builder prune -f --all
 docker system prune -f
 
-# Pull official DVWA
-docker pull ghcr.io/digininja/dvwa:latest
-docker tag ghcr.io/digininja/dvwa:latest dvwa
+# Build DVWA (adds iproute2/net-tools for Containernet compatibility)
+make -C dvwa
 
 # Verify all images are present
 echo "=== Pre-built Docker images ==="

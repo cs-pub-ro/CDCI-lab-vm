@@ -45,7 +45,7 @@ define vm_cloud_flatten_rule
 .PHONY: $(vm)_flatten
 $(vm)_flatten: $$($(vm)-dest-image)
 	@echo "Flattening cloud image (removing backing file)..."
-	qemu-img convert -c -O qcow2 "$$($(vm)-dest-image)" "$$($(vm)-dest-image:.qcow2=_flat.qcow2)"
+	qemu-img convert -p -c -O qcow2 "$$($(vm)-dest-image)" "$$($(vm)-dest-image:.qcow2=_flat.qcow2)"
 	mv "$$($(vm)-dest-image:.qcow2=_flat.qcow2)" "$$($(vm)-dest-image)"
 	@echo "Done! Standalone image: $$($(vm)-dest-image)"
 	ls -lh "$$($(vm)-dest-image)"

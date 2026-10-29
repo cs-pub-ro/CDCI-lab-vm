@@ -5,7 +5,7 @@
 sh_log_info "Installing CDCI tools..."
 
 # terminal utilities
-pkg_install --no-install-recommends tmux vim-nox nano bash-completion less \
+pkg_install --no-install-recommends tmux vim-nox neovim nano bash-completion less \
 	pciutils usbutils sysstat
 
 # network utilities (useful for lab debugging)

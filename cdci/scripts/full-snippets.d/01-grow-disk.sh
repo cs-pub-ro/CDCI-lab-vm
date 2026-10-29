@@ -13,3 +13,4 @@ if [[ -n "$ROOT_DISK" && -n "$ROOT_PART" ]]; then
 	resize2fs "$ROOT_DEV" || true
 	df -h /
 fi
+

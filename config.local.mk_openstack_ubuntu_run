@@ -1,0 +1,36 @@
+# config.local.mk for building on a native Linux machine (e.g., wgpass-clients)
+# Copy to config.local.mk before running make.
+#
+# Prerequisites:
+#   sudo apt-get install -y build-essential make git qemu-system-x86 qemu-utils \
+#       libvirt-daemon-system cpu-checker whois ovmf
+#   # Install Packer from https://apt.releases.hashicorp.com
+#   packer init framework/base/ubuntu/
+#   packer init framework/layers/generic/
+#   # Ensure user is in the kvm group: sudo usermod -aG kvm $(whoami)
+#   # Download Ubuntu 26.04 ISO to ~/iso/
+#
+# Note: the framework ISO glob expects ubuntu-26.04.*-live-server-amd64.iso
+# (with a dot+suffix after the version). If your ISO is named
+# ubuntu-26.04-live-server-amd64.iso, rename it to
+# ubuntu-26.04.0-live-server-amd64.iso.
+
+CDCI_LABVM_VERSION = 2027
+
+# ISO directory
+BASE_ISO_DIR ?= $(HOME)/iso
+
+# Run headless (no GUI, VNC only — for remote/headless servers)
+HEADLESS_PACKER = true
+
+# Cloud admin password
+CDCI_CLOUD_ADMIN_PASSWORD = cdci-admin-2027
+
+# Prevent Make from deleting images on interrupted builds
+.PRECIOUS: %
+
+## Optional: enable serial console + QEMU monitor for debugging
+# DEBUG_CONSOLE = 1
+## Or set individually:
+# QEMU_SERIAL = $(BUILD_DIR)/qemu-serial.log
+# QEMU_MONITOR = $(BUILD_DIR)/qemu-monitor.sock

@@ -12,9 +12,13 @@ if [[ ! -d "$CDCI_LABS_DIR/.git" ]]; then
 	chown -R student:student "$CDCI_LABS_DIR"
 fi
 
-# Build all container images using the existing Makefile
+# Build cdci_base (includes Snort 3 via multi-stage build)
 cd "$CDCI_LABS_DIR/containers"
-make containers
+make -C cdci_base
+
+# Pull official DVWA
+docker pull ghcr.io/digininja/dvwa:latest
+docker tag ghcr.io/digininja/dvwa:latest dvwa
 
 # Verify all images are present
 echo "=== Pre-built Docker images ==="

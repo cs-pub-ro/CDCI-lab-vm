@@ -29,8 +29,16 @@ CDCI_CLOUD_ADMIN_PASSWORD = cdci-admin-2027
 # Prevent Make from deleting images on interrupted builds
 .PRECIOUS: %
 
-## Optional: enable serial console + QEMU monitor for debugging
+## Serial console debug — logs kernel/boot output to a file
+QEMU_SERIAL = $(HOME)/qemu-serial.log
+## Or use DEBUG_CONSOLE = 1 to enable both serial + QEMU monitor
 # DEBUG_CONSOLE = 1
-## Or set individually:
-# QEMU_SERIAL = $(BUILD_DIR)/qemu-serial.log
 # QEMU_MONITOR = $(BUILD_DIR)/qemu-monitor.sock
+
+## IMPORTANT: Ubuntu 26.04 compatibility fixes required in framework/
+##   1. framework/base/ubuntu/common.pkr.hcl line 40:
+##      Change: {{.Vars}} sudo -E -S bash -e '{{.Path}}'
+##      To:     sudo {{.Vars}} bash -e '{{.Path}}'
+##   2. Same fix in framework/base/common.pkr.hcl line 40
+##   3. Same fix in framework/layers/generic/build.pkr.hcl line 47
+##   Reason: Ubuntu 26.04's sudo ignores -E, and uutils mkdir -p "" errors out

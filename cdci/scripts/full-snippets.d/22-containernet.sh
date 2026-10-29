@@ -15,8 +15,13 @@ if [[ ! -d /opt/containernet ]]; then
 	git clone https://github.com/containernet/containernet.git /opt/containernet
 fi
 cd /opt/containernet/ansible
+# Fix: Ubuntu 26.04 GCC treats -Wincompatible-pointer-types as error;
+# OpenFlow source code triggers this in lib/backtrace.c
+export CFLAGS="-Wno-error=incompatible-pointer-types -Wno-error=int-conversion -Wno-error=implicit-function-declaration -Wno-error=return-mismatch -include sys/stat.h"
 ansible-playbook -i "localhost," -c local install.yml
 cd /opt/containernet
+# Fix PEP 668: allow pip to install system-wide on Ubuntu 26.04
+rm -f /usr/lib/python3.*/EXTERNALLY-MANAGED
 make develop
 
 # Verify installation

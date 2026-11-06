@@ -1,0 +1,6 @@
+[Unit]
+Description=Upload asciinema recordings
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/asciinema-upload.sh
